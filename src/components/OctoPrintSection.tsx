@@ -53,7 +53,7 @@ async function fetchOctoPrintFiles(url: string, apiKey: string) {
   }
 }
 
-export default function OctoPrintSection({ userId, onPrintersChange, onSelectedChange }: { userId: string, onPrintersChange?: (printers: any[]) => void, onSelectedChange?: (printerId: string) => void }) {
+export default function OctoPrintSection({ userId, onPrintersChange, onSelectedChange }: { userId: string, onPrintersChange?: (printers: Record<string, unknown>[]) => void, onSelectedChange?: (printerId: string) => void }) {
   const [printers, setPrinters] = useState<Record<string, unknown>[]>([]);
   const [selected, setSelected] = useState<string>("");
   const [form, setForm] = useState({ url: "", apiKey: "" });
