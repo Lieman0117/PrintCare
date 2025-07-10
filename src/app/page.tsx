@@ -18,7 +18,6 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  // const router = useRouter(); // Removed unused
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
