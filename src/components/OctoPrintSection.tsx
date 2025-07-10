@@ -154,7 +154,7 @@ export default function OctoPrintSection({ userId, onPrintersChange, onSelectedC
 
   // Start editing
   const startEdit = (printer: Record<string, unknown>) => {
-    setEditingId(printer.id);
+    setEditingId(String(printer.id));
     setForm({ url: printer.url as string, apiKey: printer.api_key as string });
   };
 
