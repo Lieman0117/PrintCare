@@ -4,8 +4,19 @@ import { supabase } from "../lib/supabaseClient";
 
 const MATERIALS = ["PLA", "ABS", "PETG", "TPU", "Nylon", "Other"];
 
-export default function PrintLogSection({ userId, printerId, onLogAdded }: { userId: string, printerId: string, onLogAdded?: () => void }) {
-  const [logs, setLogs] = useState<any[]>([]);
+interface PrintLog {
+  id: string;
+  name: string;
+  material: string;
+  grams_used: number;
+  time_hours: number;
+  time_minutes: number;
+  notes: string;
+  created_at: string;
+}
+
+export default function PrintLogSection({ userId, printerId }: { userId: string, printerId: string }) {
+  const [logs, setLogs] = useState<PrintLog[]>([]);
   const [form, setForm] = useState({ name: "", material: MATERIALS[0], grams: "", hours: "", minutes: "", notes: "" });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -20,7 +31,7 @@ export default function PrintLogSection({ userId, printerId, onLogAdded }: { use
         .eq("user_id", userId)
         .eq("printer_id", printerId)
         .order("created_at", { ascending: false });
-      setLogs(data || []);
+      setLogs((data as PrintLog[]) || []);
     };
     fetchLogs();
   }, [userId, printerId]);
@@ -52,7 +63,7 @@ export default function PrintLogSection({ userId, printerId, onLogAdded }: { use
         .eq("user_id", userId)
         .eq("printer_id", printerId)
         .order("created_at", { ascending: false });
-      setLogs(data || []);
+      setLogs((data as PrintLog[]) || []);
       if (typeof window !== 'undefined') {
         window.location.reload();
       }

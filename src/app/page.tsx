@@ -5,12 +5,20 @@ import PrintLogSection from "../components/PrintLogSection";
 import MaintenanceSection from "../components/MaintenanceSection";
 import { useRouter } from "next/navigation";
 
+interface Printer {
+  id: string;
+  name: string;
+  url: string;
+  api_key: string;
+  created_at?: string;
+}
+
 function LoginForm({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  // const router = useRouter(); // Removed unused
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +50,12 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
       />
       {error && <div className="text-red-500 text-sm">{error}</div>}
       <button type="submit" className="bg-blue-600 text-white rounded p-2 font-semibold hover:bg-blue-700 transition" disabled={loading}>{loading ? "Logging in..." : "Login"}</button>
-      <div className="text-sm text-center mt-2">Don't have an account? <a href="/signup" className="text-blue-600 hover:underline">Sign up</a></div>
+      <div className="text-sm text-center mt-2">Don&apos;t have an account? <a href="/signup" className="text-blue-600 hover:underline">Sign up</a></div>
     </form>
   );
 }
 
-function PrinterManager({ userId, printers, setPrinters, selectedPrinter, setSelectedPrinter, onPrinterAdded }: { userId: string, printers: any[], setPrinters: (p: any[]) => void, selectedPrinter: any, setSelectedPrinter: (p: any) => void, onPrinterAdded: (p: any) => void }) {
+function PrinterManager({ userId, printers, setPrinters, selectedPrinter, setSelectedPrinter, onPrinterAdded }: { userId: string, printers: Printer[], setPrinters: (p: Printer[]) => void, selectedPrinter: Printer | null, setSelectedPrinter: (p: Printer | null) => void, onPrinterAdded: (p: Printer) => void }) {
   const [form, setForm] = useState({ name: "", url: "", apiKey: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
@@ -70,7 +78,7 @@ function PrinterManager({ userId, printers, setPrinters, selectedPrinter, setSel
         api_key: form.apiKey,
       }).select().single();
       if (!error && data) {
-        onPrinterAdded(data);
+        onPrinterAdded(data as Printer);
       }
     }
     setForm({ name: "", url: "", apiKey: "" });
@@ -84,7 +92,7 @@ function PrinterManager({ userId, printers, setPrinters, selectedPrinter, setSel
     setMessage("Deleted!");
   };
 
-  const startEdit = (printer: any) => {
+  const startEdit = (printer: Printer) => {
     setEditingId(printer.id);
     setForm({ name: printer.name || "", url: printer.url, apiKey: printer.api_key });
   };
@@ -126,9 +134,8 @@ function PrinterManager({ userId, printers, setPrinters, selectedPrinter, setSel
 }
 
 function Dashboard({ onLogout, userId }: { onLogout: () => void, userId: string }) {
-  const [printers, setPrinters] = useState<any[]>([]);
-  const [selectedPrinter, setSelectedPrinter] = useState<any>(null);
-  const [refresh, setRefresh] = useState(0); // Add refresh state
+  const [printers, setPrinters] = useState<Printer[]>([]);
+  const [selectedPrinter, setSelectedPrinter] = useState<Printer | null>(null);
 
   useEffect(() => {
     const fetchPrinters = async () => {
@@ -141,9 +148,9 @@ function Dashboard({ onLogout, userId }: { onLogout: () => void, userId: string 
       if (data && data.length > 0 && !selectedPrinter) setSelectedPrinter(data[0]);
     };
     if (userId) fetchPrinters();
-  }, [userId]);
+  }, [userId, selectedPrinter]);
 
-  const handlePrinterAdded = (printer: any) => {
+  const handlePrinterAdded = (printer: Printer) => {
     setPrinters(prev => [...prev, printer]);
     setSelectedPrinter(printer);
   };
@@ -164,11 +171,11 @@ function Dashboard({ onLogout, userId }: { onLogout: () => void, userId: string 
           <div className="text-xl font-bold mb-2">Selected Printer: <span className="text-blue-600">{selectedPrinter.name || selectedPrinter.url}</span></div>
           <section className="bg-white dark:bg-gray-900 shadow rounded-lg p-6">
             <h2 className="text-xl font-bold mb-4">Manual Print Logging</h2>
-            <PrintLogSection userId={userId} printerId={selectedPrinter.id} onLogAdded={() => setRefresh(r => r + 1)} />
+            <PrintLogSection userId={userId} printerId={selectedPrinter.id} />
           </section>
           <section className="bg-white dark:bg-gray-900 shadow rounded-lg p-6">
             <h2 className="text-xl font-bold mb-4">Maintenance</h2>
-            <MaintenanceSection userId={userId} printerId={selectedPrinter.id} refresh={refresh} onRefresh={() => setRefresh(r => r + 1)} />
+            <MaintenanceSection userId={userId} printerId={selectedPrinter.id} />
           </section>
         </>
       ) : (
@@ -199,9 +206,5 @@ export default function Home() {
     setLoggedIn(false);
     setUserId("");
   };
-  return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex items-center justify-center p-4">
-      {!loggedIn ? <LoginForm onLogin={() => setLoggedIn(true)} /> : <Dashboard onLogout={handleLogout} userId={userId} />}
-    </div>
-  );
+  return loggedIn ? <Dashboard onLogout={handleLogout} userId={userId} /> : <LoginForm onLogin={() => setLoggedIn(true)} />;
 }

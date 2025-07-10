@@ -35,11 +35,25 @@ function AddPartModal({ open, onClose, onAdd }: { open: boolean, onClose: () => 
   );
 }
 
-export default function MaintenanceSection({ userId, printerId, refresh = 0, onRefresh }: { userId: string, printerId: string, refresh?: number, onRefresh?: () => void }) {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [parts, setParts] = useState<any[]>([]);
+interface PrintLog {
+  time_hours: number;
+  time_minutes: number;
+  created_at: string;
+}
+interface Part {
+  id: string;
+  name: string;
+  replacement_interval_hours: number;
+  last_replacement_at: string | null;
+  user_id: string;
+  printer_id: string;
+  created_at?: string;
+}
+
+export default function MaintenanceSection({ userId, printerId }: { userId: string, printerId: string }) {
+  const [logs, setLogs] = useState<PrintLog[]>([]);
+  const [parts, setParts] = useState<Part[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   // Helper to fetch logs and parts
   const fetchData = async () => {
@@ -48,17 +62,16 @@ export default function MaintenanceSection({ userId, printerId, refresh = 0, onR
       .select("time_hours, time_minutes, created_at")
       .eq("user_id", userId)
       .eq("printer_id", printerId);
-    setLogs(logsData || []);
+    setLogs((logsData as PrintLog[]) || []);
     const { data: partsData } = await supabase
       .from("maintenance_parts")
       .select("*")
       .eq("user_id", userId)
       .eq("printer_id", printerId)
       .order("created_at", { ascending: true });
-    setParts(partsData || []);
+    setParts((partsData as Part[]) || []);
   };
 
-  // Fetch print logs and parts
   useEffect(() => {
     if (!printerId) return;
     fetchData();
@@ -69,9 +82,8 @@ export default function MaintenanceSection({ userId, printerId, refresh = 0, onR
   const totalHours = totalMinutes / 60;
 
   // Calculate hours since last replacement for each part
-  const getHoursSince = (part: any) => {
+  const getHoursSince = (part: Part) => {
     if (!part.last_replacement_at) return totalHours;
-    // Sum hours from logs after last replacement
     const last = new Date(part.last_replacement_at);
     const filtered = logs.filter(log => new Date(log.created_at) > last);
     const mins = filtered.reduce((sum, log) => sum + (log.time_hours || 0) * 60 + (log.time_minutes || 0), 0);
@@ -80,7 +92,6 @@ export default function MaintenanceSection({ userId, printerId, refresh = 0, onR
 
   // Add new part
   const addPart = async (name: string, interval: number) => {
-    setLoading(true);
     await supabase.from("maintenance_parts").insert({
       user_id: userId,
       printer_id: printerId,
@@ -88,23 +99,16 @@ export default function MaintenanceSection({ userId, printerId, refresh = 0, onR
       replacement_interval_hours: interval,
       last_replacement_at: null,
     });
-    setLoading(false);
     setModalOpen(false);
-    await new Promise(res => setTimeout(res, 200)); // 200ms delay
     await fetchData();
-    if (onRefresh) onRefresh();
   };
 
   // Mark part as replaced
   const markReplaced = async (partId: string) => {
-    setLoading(true);
     await supabase.from("maintenance_parts").update({
       last_replacement_at: new Date().toISOString(),
     }).eq("id", partId);
-    setLoading(false);
-    await new Promise(res => setTimeout(res, 200)); // 200ms delay
     await fetchData();
-    if (onRefresh) onRefresh();
   };
 
   if (!printerId) return <div className="text-gray-500">No printer selected.</div>;
