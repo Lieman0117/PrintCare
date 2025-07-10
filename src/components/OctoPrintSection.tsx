@@ -14,8 +14,8 @@ function SlicerModal({ open, onClose, url, apiKey }: { open: boolean, onClose: (
           <div><b>API Key:</b> <span className="select-all">{apiKey}</span></div>
         </div>
         <div className="text-xs mt-2">
-          <b>PrusaSlicer:</b> Go to Printer Settings → General → &quot;Upload to OctoPrint&quot;. Use the above URL and API key.<br/>
-          <b>Cura:</b> Install the &quot;OctoPrint Connection&quot; plugin, then add a printer and use the above URL and API key.
+          <p><strong>PrusaSlicer:</strong> Go to <em>Printer Settings → General → &quot;Upload to OctoPrint&quot;</em>. Use the above URL and API key.</p>
+          <p><strong>Cura:</strong> Install the <em>&quot;OctoPrint Connection&quot;</em> plugin, then add a printer and use the above URL and API key.</p>
         </div>
         <button onClick={onClose} className="mt-4 px-3 py-1 rounded bg-blue-600 text-white self-end">Close</button>
       </div>
@@ -30,8 +30,11 @@ async function fetchOctoPrintStatus(url: string, apiKey: string) {
     });
     if (!res.ok) throw new Error("Failed to fetch status");
     return await res.json();
-  } catch (e: any) {
-    return { error: e.message };
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return { error: e.message };
+    }
+    return { error: "Unknown error" };
   }
 }
 
@@ -42,8 +45,11 @@ async function fetchOctoPrintFiles(url: string, apiKey: string) {
     });
     if (!res.ok) throw new Error("Failed to fetch files");
     return await res.json();
-  } catch (e: any) {
-    return { error: e.message };
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return { error: e.message };
+    }
+    return { error: "Unknown error" };
   }
 }
 
@@ -107,7 +113,7 @@ export default function OctoPrintSection({ userId, onPrintersChange, onSelectedC
         if (filesData.error) {
           setError(prev => prev + "\nFiles: " + filesData.error);
         } else if (filesData.files) {
-          setFiles(filesData.files.map((f: any) => f.name));
+          setFiles(filesData.files.map((f: { name: string }) => f.name));
         }
       } else {
         setStatus(null);
