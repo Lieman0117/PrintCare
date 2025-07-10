@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import PrintLogSection from "../components/PrintLogSection";
 import MaintenanceSection from "../components/MaintenanceSection";
-import { useRouter } from "next/navigation";
 
 interface Printer {
   id: string;
