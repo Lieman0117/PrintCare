@@ -75,6 +75,7 @@ export default function MaintenanceSection({ userId, printerId }: { userId: stri
   useEffect(() => {
     if (!printerId) return;
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, printerId, modalOpen]);
 
   // Calculate total print hours

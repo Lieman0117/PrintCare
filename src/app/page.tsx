@@ -148,7 +148,8 @@ function Dashboard({ onLogout, userId }: { onLogout: () => void, userId: string 
       if (data && data.length > 0 && !selectedPrinter) setSelectedPrinter(data[0]);
     };
     if (userId) fetchPrinters();
-  }, [userId, selectedPrinter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   const handlePrinterAdded = (printer: Printer) => {
     setPrinters(prev => [...prev, printer]);

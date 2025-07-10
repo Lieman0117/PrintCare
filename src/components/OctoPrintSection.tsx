@@ -14,8 +14,8 @@ function SlicerModal({ open, onClose, url, apiKey }: { open: boolean, onClose: (
           <div><b>API Key:</b> <span className="select-all">{apiKey}</span></div>
         </div>
         <div className="text-xs mt-2">
-          <b>PrusaSlicer:</b> Go to Printer Settings → General → "Upload to OctoPrint". Use the above URL and API key.<br/>
-          <b>Cura:</b> Install the "OctoPrint Connection" plugin, then add a printer and use the above URL and API key.
+          <b>PrusaSlicer:</b> Go to Printer Settings → General → &quot;Upload to OctoPrint&quot;. Use the above URL and API key.<br/>
+          <b>Cura:</b> Install the &quot;OctoPrint Connection&quot; plugin, then add a printer and use the above URL and API key.
         </div>
         <button onClick={onClose} className="mt-4 px-3 py-1 rounded bg-blue-600 text-white self-end">Close</button>
       </div>
@@ -48,11 +48,11 @@ async function fetchOctoPrintFiles(url: string, apiKey: string) {
 }
 
 export default function OctoPrintSection({ userId, onPrintersChange, onSelectedChange }: { userId: string, onPrintersChange?: (printers: any[]) => void, onSelectedChange?: (printerId: string) => void }) {
-  const [printers, setPrinters] = useState<any[]>([]);
+  const [printers, setPrinters] = useState<Record<string, unknown>[]>([]);
   const [selected, setSelected] = useState<string>("");
   const [form, setForm] = useState({ url: "", apiKey: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [status, setStatus] = useState<any>(null);
+  const [status, setStatus] = useState<string | null>(null);
   const [files, setFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -70,7 +70,11 @@ export default function OctoPrintSection({ userId, onPrintersChange, onSelectedC
         .order("created_at", { ascending: true });
       setPrinters(data || []);
       if (onPrintersChange) onPrintersChange(data || []);
-      if (data && data.length > 0 && !selected) setSelected(data[0].id);
+      if (data && data.length > 0 && !selected) {
+        const id = data[0].id;
+        if (typeof id === 'string' || typeof id === 'number') setSelected(String(id));
+        else setSelected("");
+      }
       if (data && data.length === 0) setShowAdd(true);
     };
     if (userId) fetchPrinters();
@@ -86,20 +90,27 @@ export default function OctoPrintSection({ userId, onPrintersChange, onSelectedC
       setError("");
       setStatus(null);
       setFiles([]);
-      const printer = printers.find(p => p.id === selected);
-      if (printer && printer.url && printer.api_key) {
-        const statusData = await fetchOctoPrintStatus(printer.url, printer.api_key);
+      const printer = printers.find(p => String(p.id) === selected);
+      const hasOctoPrint = printer && typeof printer.url === 'string' && printer.url && typeof printer.api_key === 'string' && printer.api_key;
+      if (hasOctoPrint) {
+        const statusData = await fetchOctoPrintStatus(printer.url as string, printer.api_key as string);
         if (statusData.error) {
           setError("Status: " + statusData.error);
+        } else if (statusData.state && typeof statusData.state.text === 'string') {
+          setStatus(statusData.state.text);
+        } else if (typeof statusData === 'string') {
+          setStatus(statusData);
         } else {
-          setStatus(statusData.state ? statusData.state.text : JSON.stringify(statusData));
+          setStatus(null);
         }
-        const filesData = await fetchOctoPrintFiles(printer.url, printer.api_key);
+        const filesData = await fetchOctoPrintFiles(printer.url as string, printer.api_key as string);
         if (filesData.error) {
           setError(prev => prev + "\nFiles: " + filesData.error);
         } else if (filesData.files) {
           setFiles(filesData.files.map((f: any) => f.name));
         }
+      } else {
+        setStatus(null);
       }
     };
     if (selected) fetchData();
@@ -138,13 +149,13 @@ export default function OctoPrintSection({ userId, onPrintersChange, onSelectedC
     await supabase.from("octoprint_settings").delete().eq("id", id);
     setLoading(false);
     setMessage("Deleted!");
-    if (selected === id) setSelected(printers.length > 1 ? printers.find(p => p.id !== id)?.id || "" : "");
+    if (selected === id) setSelected(printers.length > 1 ? String(printers.find(p => String(p.id) !== id)?.id || "") : "");
   };
 
   // Start editing
-  const startEdit = (printer: any) => {
+  const startEdit = (printer: Record<string, unknown>) => {
     setEditingId(printer.id);
-    setForm({ url: printer.url, apiKey: printer.api_key });
+    setForm({ url: printer.url as string, apiKey: printer.api_key as string });
   };
 
   return (
@@ -153,7 +164,9 @@ export default function OctoPrintSection({ userId, onPrintersChange, onSelectedC
         {printers.length > 0 && (
           <div className="flex gap-2 items-center">
             <select className="input input-bordered p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800" value={selected} onChange={e => setSelected(e.target.value)}>
-              {printers.map(p => <option key={p.id} value={p.id}>{p.url}</option>)}
+              {printers.map(p => (
+                <option key={String(p.id)} value={String(p.id)}>{String(p.url)}</option>
+              ))}
             </select>
             <button onClick={() => { setEditingId(null); setShowAdd(true); }} className="bg-blue-600 text-white rounded px-3 py-1 font-semibold hover:bg-blue-700 transition">Add</button>
             {selected && <button onClick={() => setSlicerOpen(true)} className="bg-green-600 text-white rounded px-3 py-1 font-semibold hover:bg-green-700 transition">Slicer Integration</button>}
@@ -173,13 +186,16 @@ export default function OctoPrintSection({ userId, onPrintersChange, onSelectedC
         )}
         {selected && printers.length > 0 && (
           <div className="flex gap-2 mt-2">
-            <button onClick={() => startEdit(printers.find(p => p.id === selected))} className="bg-yellow-500 text-white rounded px-3 py-1 font-semibold hover:bg-yellow-600 transition">Edit</button>
+            <button onClick={() => {
+              const printer = printers.find(p => String(p.id) === selected);
+              if (printer) startEdit(printer);
+            }} className="bg-yellow-500 text-white rounded px-3 py-1 font-semibold hover:bg-yellow-600 transition">Edit</button>
             <button onClick={() => deletePrinter(selected)} className="bg-red-600 text-white rounded px-3 py-1 font-semibold hover:bg-red-700 transition">Delete</button>
           </div>
         )}
         {message && <div className="text-green-600 text-sm mt-1">{message}</div>}
       </div>
-      <SlicerModal open={slicerOpen} onClose={() => setSlicerOpen(false)} url={printers.find(p => p.id === selected)?.url || ""} apiKey={printers.find(p => p.id === selected)?.api_key || ""} />
+      <SlicerModal open={slicerOpen} onClose={() => setSlicerOpen(false)} url={String(printers.find(p => String(p.id) === selected)?.url || "")} apiKey={String(printers.find(p => String(p.id) === selected)?.api_key || "")} />
       {error && <div className="text-red-600 text-sm mb-2 whitespace-pre-line">{error}</div>}
       <div className="mb-2"><span className="font-semibold">Status:</span> {status || "-"}</div>
       <div>
