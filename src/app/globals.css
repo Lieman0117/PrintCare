@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  transition: background 0.3s, color 0.3s;
+}
+
+.card {
+  @apply bg-white dark:bg-gray-900 shadow-lg rounded-xl p-6;
+}
+
+input, button, select, textarea {
+  @apply rounded focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 transition;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #e0e7ef;
+}
+::-webkit-scrollbar-thumb {
+  background: #b4bcd0;
+  border-radius: 4px;
+}
