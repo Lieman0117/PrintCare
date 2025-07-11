@@ -10,9 +10,46 @@ interface Printer {
   octoprint_api_key?: string;
 }
 
+interface OctoPrintTemperature {
+  bed?: {
+    actual: number;
+    target: number | null;
+    offset?: number;
+  };
+  tool0?: {
+    actual: number;
+    target: number | null;
+    offset?: number;
+  };
+  [key: string]: any; // For additional tools (tool1, etc.)
+}
+
+interface OctoPrintJob {
+  file: {
+    name: string;
+    origin: string;
+    size: number;
+    date: number;
+    path: string;
+    display: string;
+  };
+  estimatedPrintTime: number | null;
+  lastPrintTime: number | null;
+  user: string | null;
+  progress: {
+    completion: number | null;
+    filepos: number;
+    printTime: number | null;
+    printTimeLeft: number | null;
+  };
+  state: string;
+  // OctoPrint may include additional fields, so allow index signature
+  [key: string]: any;
+}
+
 interface OctoPrintState {
-  temperature?: any;
-  job?: any;
+  temperature?: OctoPrintTemperature;
+  job?: OctoPrintJob;
   state?: string;
   webcamUrl?: string;
   error?: string;
