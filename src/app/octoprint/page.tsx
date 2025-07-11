@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import RequireAuth from "../../components/RequireAuth";
+import Image from 'next/image';
 
 interface Printer {
   id: string;
@@ -188,7 +189,13 @@ export default function OctoPrintPage() {
             {octo.webcamUrl && (
               <div className="border rounded p-4 bg-white dark:bg-gray-900">
                 <h2 className="font-semibold mb-2">Webcam</h2>
-                <img src={octo.webcamUrl} alt="Webcam" className="w-full max-w-xs rounded" />
+                <Image
+                  src={octo.webcamUrl}
+                  alt="Webcam"
+                  width={320}
+                  height={240}
+                  className="w-full max-w-xs rounded"
+                />
               </div>
             )}
           </div>

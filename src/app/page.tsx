@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, Suspense, lazy } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import RequireAuth from "../components/RequireAuth";
 import MobileNavDrawer from "../components/MobileNavDrawer";
@@ -79,7 +79,6 @@ export default function DashboardPage() {
   // 1. Total grams used by material
   const gramsByMaterial: Record<string, number> = {};
   printJobs.forEach(job => {
-    // @ts-ignore: allow missing grams_used/material
     const grams = job.grams_used || 0;
     const material = job.material || "Unknown";
     gramsByMaterial[material] = (gramsByMaterial[material] || 0) + grams;
@@ -122,7 +121,6 @@ export default function DashboardPage() {
   // 5. Total number of manual and OctoPrint jobs
   let manualJobs = 0, octoprintJobs = 0;
   printJobs.forEach(job => {
-    // @ts-ignore: allow missing source
     if (job.source === 'octoprint') octoprintJobs++;
     else manualJobs++;
   });
