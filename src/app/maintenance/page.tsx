@@ -345,7 +345,7 @@ export default function MaintenancePage() {
     const lastLog = logsForType.length > 0 ? logsForType.reduce((a, b) => new Date(a.date) > new Date(b.date) ? a : b) : undefined;
     // If there is a last maintenance log, always show the full interval (reset) until the next maintenance log is created
     if (lastLog) {
-      let msg = [];
+      const msg = [];
       if (interval.interval_prints) msg.push(`${interval.interval_prints} prints left`);
       if (interval.interval_hours) msg.push(`${interval.interval_hours} hours left`);
       return msg.join(", ");
@@ -366,9 +366,9 @@ export default function MaintenancePage() {
       }
       return sum;
     }, 0);
-    let printsLeft = interval.interval_prints ? interval.interval_prints - jobsSince : null;
-    let hoursLeft = interval.interval_hours ? interval.interval_hours - hoursSince : null;
-    let msg = [];
+    const printsLeft = interval.interval_prints ? interval.interval_prints - jobsSince : null;
+    const hoursLeft = interval.interval_hours ? interval.interval_hours - hoursSince : null;
+    const msg = [];
     if (printsLeft !== null) {
       if (printsLeft < 0) msg.push(`Overdue by ${Math.abs(printsLeft)} prints`);
       else if (printsLeft === 0) msg.push("Due now (prints)");
