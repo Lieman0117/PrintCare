@@ -1,7 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import { supabase } from "../lib/supabaseClient";
 import RequireAuth from "../components/RequireAuth";
+import MobileNavDrawer from "@/components/MobileNavDrawer";
+import dynamic from "next/dynamic";
 
 interface Printer {
   id: string;
@@ -15,6 +17,9 @@ interface PrintJob {
   status?: string;
   start_time?: string;
   end_time?: string;
+  material?: string;
+  grams_used?: number;
+  source?: string;
 }
 interface MaintenanceLog {
   id: string;
@@ -45,7 +50,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!userId) return;
     supabase.from("printers").select("id, name, model").eq("user_id", userId).then(({ data }) => setPrinters(data || []));
-    supabase.from("print_jobs").select("id, printer_id, name, status, start_time, end_time").eq("user_id", userId).order("start_time", { ascending: false }).then(({ data }) => setPrintJobs(data || []));
+    supabase.from("print_jobs").select("id, printer_id, name, status, start_time, end_time, material, grams_used").eq("user_id", userId).order("start_time", { ascending: false }).then(({ data }) => setPrintJobs(data || []));
     supabase.from("maintenance_logs").select("id, printer_id, type, date").eq("user_id", userId).order("date", { ascending: false }).then(({ data }) => setMaintenanceLogs(data || []));
     supabase.from("maintenance_intervals").select("id, printer_id, type, interval_prints, interval_hours").eq("user_id", userId).then(({ data }) => setIntervals(data || []));
   }, [userId]);
@@ -70,6 +75,60 @@ export default function DashboardPage() {
     return "OK";
   }
 
+  // --- Stats & Analytics Data Preparation ---
+  // 1. Total grams used by material
+  const gramsByMaterial: Record<string, number> = {};
+  printJobs.forEach(job => {
+    // @ts-ignore: allow missing grams_used/material
+    const grams = job.grams_used || 0;
+    const material = job.material || "Unknown";
+    gramsByMaterial[material] = (gramsByMaterial[material] || 0) + grams;
+  });
+  const gramsByMaterialData = Object.entries(gramsByMaterial).map(([material, grams]) => ({ material, grams }));
+
+  // 2. Average print time (in minutes)
+  const printTimes: number[] = printJobs.map(job => {
+    if (job.start_time && job.end_time) {
+      const start = new Date(job.start_time).getTime();
+      const end = new Date(job.end_time).getTime();
+      return (end - start) / 60000; // minutes
+    }
+    return 0;
+  }).filter(t => t > 0);
+  const avgPrintTime = printTimes.length ? (printTimes.reduce((a, b) => a + b, 0) / printTimes.length) : 0;
+
+  // 3. Print time per day/week
+  const [printTimeView, setPrintTimeView] = useState<'day' | 'week'>('day');
+  const printTimeByPeriod: Record<string, number> = {};
+  printJobs.forEach(job => {
+    if (job.start_time && job.end_time) {
+      const start = new Date(job.start_time);
+      const end = new Date(job.end_time);
+      const key = printTimeView === 'day'
+        ? start.toISOString().slice(0, 10)
+        : `${start.getFullYear()}-W${Math.ceil((start.getDate() + (start.getDay()||7)-1)/7)}`;
+      printTimeByPeriod[key] = (printTimeByPeriod[key] || 0) + (end.getTime() - start.getTime()) / 60000;
+    }
+  });
+  const printTimeByPeriodData = Object.entries(printTimeByPeriod).map(([period, minutes]) => ({ period, minutes }));
+
+  // 4. Maintenance timing/part usage (by type)
+  const maintenanceByType: Record<string, number> = {};
+  maintenanceLogs.forEach(log => {
+    maintenanceByType[log.type] = (maintenanceByType[log.type] || 0) + 1;
+  });
+  const maintenanceByTypeData = Object.entries(maintenanceByType).map(([type, count]) => ({ type, count }));
+
+  // 5. Total number of manual and OctoPrint jobs
+  let manualJobs = 0, octoprintJobs = 0;
+  printJobs.forEach(job => {
+    // @ts-ignore: allow missing source
+    if (job.source === 'octoprint') octoprintJobs++;
+    else manualJobs++;
+  });
+
+  // --- End Stats & Analytics Data ---
+
   // Recent print jobs (last 5)
   const recentJobs = printJobs.slice(0, 5);
 
@@ -79,12 +138,27 @@ export default function DashboardPage() {
     return logsForType.length === 0;
   });
 
+  const DashboardChartsClient = dynamic(() => import("./dashboard-charts/DashboardChartsClient"), { ssr: false });
+
   return (
     <>
       <MobileNavDrawer />
       <RequireAuth>
         <div className="space-y-8">
           <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+
+          {/* Stats & Analytics Section */}
+          <DashboardChartsClient
+            gramsByMaterialData={gramsByMaterialData}
+            avgPrintTime={avgPrintTime}
+            manualJobs={manualJobs}
+            octoprintJobs={octoprintJobs}
+            printTimeByPeriodData={printTimeByPeriodData}
+            printTimeView={printTimeView}
+            setPrintTimeView={setPrintTimeView}
+            maintenanceByTypeData={maintenanceByTypeData}
+          />
+
           {/* Printer summary cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {printers.map(printer => (

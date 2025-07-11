@@ -28,7 +28,7 @@ const STATUS_OPTIONS = ["Success", "Failed", "In Progress"];
 export default function PrintJobsPage() {
   const [jobs, setJobs] = useState<PrintJob[]>([]);
   const [printers, setPrinters] = useState<Printer[]>([]);
-  const [form, setForm] = useState<Partial<PrintJob>>({ start_time: "", end_time: "" });
+  const [form, setForm] = useState<Partial<PrintJob> & { grams_used?: string | number; hours?: string; minutes?: string }>({ hours: "", minutes: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -83,40 +83,44 @@ export default function PrintJobsPage() {
       setError("Printer and name are required.");
       return;
     }
+    const now = new Date();
+    const hours = parseInt(form.hours || "0", 10);
+    const minutes = parseInt(form.minutes || "0", 10);
+    const durationMs = (hours * 60 + minutes) * 60000;
+    const end_time = now.toISOString();
+    const start_time = new Date(now.getTime() - durationMs).toISOString();
     setLoading(true);
+    const { hours: _h, minutes: _m, ...dbForm } = form;
     if (editingId) {
       // Update
       const { error } = await supabase
         .from("print_jobs")
         .update({
-          printer_id: form.printer_id,
-          name: form.name,
-          material: form.material,
-          status: form.status,
-          start_time: form.start_time,
-          end_time: form.end_time,
-          notes: form.notes,
+          ...dbForm,
+          grams_used: form.grams_used ? Number(form.grams_used) : null,
+          start_time,
+          end_time,
           updated_at: new Date().toISOString(),
         })
         .eq("id", editingId)
         .eq("user_id", userId);
       if (error) setError(error.message);
       else {
-        setJobs(jobs.map(j => (j.id === editingId ? { ...j, ...form, printer: printers.find(p => p.id === form.printer_id) } as PrintJob : j)));
+        setJobs(jobs.map(j => (j.id === editingId ? { ...j, ...dbForm, start_time, end_time, printer: printers.find(p => p.id === form.printer_id) } as PrintJob : j)));
         setEditingId(null);
-        setForm({ start_time: "", end_time: "" });
+        setForm({ hours: "", minutes: "" });
       }
     } else {
       // Create
       const { data, error } = await supabase
         .from("print_jobs")
-        .insert([{ ...form, user_id: userId }])
+        .insert([{ ...dbForm, grams_used: form.grams_used ? Number(form.grams_used) : null, user_id: userId, start_time, end_time }])
         .select("*, printer:printers(id, name)")
         .single();
       if (error) setError(error.message);
       else if (data) {
         setJobs([data as PrintJob, ...jobs]);
-        setForm({ start_time: "", end_time: "" });
+        setForm({ hours: "", minutes: "" });
       }
     }
     setLoading(false);
@@ -169,6 +173,10 @@ export default function PrintJobsPage() {
             <input name="material" value={form.material || ""} onChange={handleChange} className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800" />
           </div>
           <div>
+            <label className="block font-semibold mb-1">Grams Used</label>
+            <input type="number" name="grams_used" min="0" value={form.grams_used || ""} onChange={handleChange} className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800" />
+          </div>
+          <div>
             <label className="block font-semibold mb-1">Status</label>
             <select name="status" value={form.status || ""} onChange={handleChange} className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800">
               <option value="" disabled>Select status</option>
@@ -178,12 +186,11 @@ export default function PrintJobsPage() {
             </select>
           </div>
           <div>
-            <label className="block font-semibold mb-1">Start Time</label>
-            <input type="datetime-local" name="start_time" value={form.start_time || ""} onChange={handleChange} className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800" />
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">End Time</label>
-            <input type="datetime-local" name="end_time" value={form.end_time || ""} onChange={handleChange} className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800" />
+            <label className="block font-semibold mb-1">Print Duration</label>
+            <div className="flex gap-2">
+              <input type="number" name="hours" min="0" max="99" value={form.hours || ""} onChange={handleChange} placeholder="Hours" className="w-20 p-2 border rounded bg-gray-50 dark:bg-gray-800" />
+              <input type="number" name="minutes" min="0" max="59" value={form.minutes || ""} onChange={handleChange} placeholder="Minutes" className="w-20 p-2 border rounded bg-gray-50 dark:bg-gray-800" />
+            </div>
           </div>
           <div className="md:col-span-2">
             <label className="block font-semibold mb-1">Notes</label>
@@ -192,7 +199,7 @@ export default function PrintJobsPage() {
           <div className="md:col-span-2 flex gap-2">
             <button type="submit" className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition" disabled={loading || !userId}>{editingId ? "Update" : "Add"} Job</button>
             {editingId && (
-              <button type="button" onClick={() => { setEditingId(null); setForm({ start_time: "", end_time: "" }); }} className="bg-gray-300 dark:bg-gray-700 text-black dark:text-white rounded px-4 py-2 font-semibold">Cancel</button>
+              <button type="button" onClick={() => { setEditingId(null); setForm({ hours: "", minutes: "" }); }} className="bg-gray-300 dark:bg-gray-700 text-black dark:text-white rounded px-4 py-2 font-semibold">Cancel</button>
             )}
           </div>
           {error && <div className="text-red-600 md:col-span-2">{error}</div>}
