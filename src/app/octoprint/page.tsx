@@ -21,7 +21,7 @@ interface OctoPrintTemperature {
     target: number | null;
     offset?: number;
   };
-  [key: string]: any; // For additional tools (tool1, etc.)
+  [key: string]: unknown; // For additional tools (tool1, etc.)
 }
 
 interface OctoPrintJob {
@@ -44,7 +44,7 @@ interface OctoPrintJob {
   };
   state: string;
   // OctoPrint may include additional fields, so allow index signature
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface OctoPrintState {
