@@ -197,7 +197,7 @@ export default function SettingsPage() {
   };
 
   // Download my data (CSV export)
-  const handleDownloadData = useCallback(async (_e?: React.MouseEvent) => {
+  const handleDownloadData = useCallback(async () => {
     setLoading(true);
     setError("");
     setSuccess("");
@@ -221,7 +221,7 @@ export default function SettingsPage() {
       saveAs(blob, 'printcare_data.csv');
       setSuccess('Data exported as CSV.');
       await logActivity('data_exported');
-    } catch (e) {
+    } catch {
       setError('Failed to export data.');
     }
     setLoading(false);
