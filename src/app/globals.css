@@ -5,18 +5,21 @@
   --foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+}
+
+[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: #171717;
 }
 
 body {
@@ -41,4 +44,90 @@ input, button, select, textarea {
 ::-webkit-scrollbar-thumb {
   background: #b4bcd0;
   border-radius: 4px;
+}
+
+/* Fix component backgrounds and button visibility in light mode */
+[data-theme="light"] .bg-white {
+  background-color: #f8fafc !important;
+}
+
+[data-theme="light"] .bg-gray-50 {
+  background-color: #f1f5f9 !important;
+}
+
+[data-theme="light"] .bg-gray-100 {
+  background-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .bg-gray-200 {
+  background-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .border-gray-200 {
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .border-gray-300 {
+  border-color: #94a3b8 !important;
+}
+
+/* Make buttons more visible with better contrast */
+[data-theme="light"] .bg-blue-600 {
+  background-color: #2563eb !important;
+}
+
+[data-theme="light"] .bg-blue-700 {
+  background-color: #1d4ed8 !important;
+}
+
+[data-theme="light"] .bg-red-600 {
+  background-color: #dc2626 !important;
+}
+
+[data-theme="light"] .bg-red-700 {
+  background-color: #b91c1c !important;
+}
+
+[data-theme="light"] .bg-green-600 {
+  background-color: #16a34a !important;
+}
+
+[data-theme="light"] .bg-green-700 {
+  background-color: #15803d !important;
+}
+
+/* Ensure button text is white and readable */
+[data-theme="light"] .bg-blue-600 .text-white,
+[data-theme="light"] .bg-blue-700 .text-white,
+[data-theme="light"] .bg-red-600 .text-white,
+[data-theme="light"] .bg-red-700 .text-white,
+[data-theme="light"] .bg-green-600 .text-white,
+[data-theme="light"] .bg-green-700 .text-white {
+  color: #ffffff !important;
+}
+
+/* Make text darker for better readability on light backgrounds */
+[data-theme="light"] .text-gray-400 {
+  color: #4b5563 !important;
+}
+
+[data-theme="light"] .text-gray-500 {
+  color: #374151 !important;
+}
+
+[data-theme="light"] .text-gray-600 {
+  color: #1f2937 !important;
+}
+
+[data-theme="light"] .text-gray-700 {
+  color: #111827 !important;
+}
+
+/* Ensure blue text is readable */
+[data-theme="light"] .text-blue-600 {
+  color: #1d4ed8 !important;
+}
+
+[data-theme="light"] .text-blue-700 {
+  color: #1e40af !important;
 }
