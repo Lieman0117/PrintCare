@@ -90,7 +90,7 @@ export default function PrintJobsPage() {
     const end_time = now.toISOString();
     const start_time = new Date(now.getTime() - durationMs).toISOString();
     setLoading(true);
-    const { hours: _hours, minutes: _minutes, ...dbForm } = form;
+    const dbForm = { ...form };
     if (editingId) {
       // Update
       const { error } = await supabase
