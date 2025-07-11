@@ -2,7 +2,7 @@
 import { useEffect, useState, Suspense, lazy } from "react";
 import { supabase } from "../lib/supabaseClient";
 import RequireAuth from "../components/RequireAuth";
-import MobileNavDrawer from "@/components/MobileNavDrawer";
+import MobileNavDrawer from "../components/MobileNavDrawer";
 import dynamic from "next/dynamic";
 
 interface Printer {
