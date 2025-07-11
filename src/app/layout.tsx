@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import SidebarNav from "../components/SidebarNav";
+import SidebarNav from "@/components/SidebarNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +38,7 @@ export default function RootLayout({
                 <span className="text-2xl font-bold tracking-tight text-blue-700 dark:text-blue-300">PrintCare</span>
                 <span className="text-xs font-mono bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded px-2 py-0.5 ml-2">Dashboard</span>
               </div>
-              {/* Mobile nav placeholder */}
+              {/* Mobile hamburger and drawer */}
             </header>
             <main className="w-full max-w-full md:max-w-5xl md:mx-auto flex flex-col min-h-[calc(100vh-64px)] py-8 px-2">
               {children}
