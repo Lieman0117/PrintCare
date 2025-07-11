@@ -225,7 +225,7 @@ export default function SettingsPage() {
       setError('Failed to export data.');
     }
     setLoading(false);
-  }, [userId]);
+  }, [userId, logActivity]);
 
   // Submit feedback
   const handleFeedback = async (e: React.FormEvent) => {
