@@ -2,16 +2,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import RequireAuth from "../../components/RequireAuth";
-import { AuthError } from "@supabase/supabase-js";
 import { saveAs } from "file-saver";
 import { useTheme } from "../../components/ThemeProvider";
 
-interface Printer {
-  id: string;
-  name: string;
-  octoprint_url?: string;
-  octoprint_api_key?: string;
-}
+
 
 interface UserSettings {
   user_id: string;
@@ -27,15 +21,9 @@ interface UserActivity {
   timestamp: string;
 }
 
-interface Feedback {
-  id: string;
-  user_id: string;
-  message: string;
-  timestamp: string;
-}
+
 
 export default function SettingsPage() {
-  const [printers, setPrinters] = useState<Printer[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
@@ -56,23 +44,13 @@ export default function SettingsPage() {
     setTheme(newTheme as 'light' | 'dark' | 'system');
   };
 
-  // Fetch user and printers
+  // Fetch user
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id || null);
       setUserEmail(data.user?.email || null);
     });
   }, []);
-  useEffect(() => {
-    if (!userId) return;
-    supabase
-      .from("printers")
-      .select("id, name, octoprint_url, octoprint_api_key")
-      .eq("user_id", userId)
-      .then(({ data }) => {
-        setPrinters(data || []);
-      });
-  }, [userId]);
 
   // Fetch user settings
   useEffect(() => {
@@ -141,26 +119,7 @@ export default function SettingsPage() {
     setLoading(false);
   };
 
-  // Handle OctoPrint settings update
-  const handlePrinterChange = (id: string, field: string, value: string) => {
-    setPrinters(printers => printers.map(p => p.id === id ? { ...p, [field]: value } : p));
-  };
-  const handlePrinterSave = async (printer: Printer) => {
-    setLoading(true);
-    setSuccess("");
-    setError("");
-    const { error } = await supabase
-      .from("printers")
-      .update({ octoprint_url: printer.octoprint_url, octoprint_api_key: printer.octoprint_api_key })
-      .eq("id", printer.id);
-    setLoading(false);
-    if (error) setError(error.message);
-    else {
-      setSuccess("OctoPrint settings updated!");
-      await logActivity('octoprint_settings_updated', `Printer: ${printer.name}`);
-    }
-    setTimeout(() => setSuccess(""), 2000);
-  };
+
 
   // Sign out
   const handleSignOut = async () => {
@@ -238,7 +197,7 @@ export default function SettingsPage() {
   };
 
   // Download my data (CSV export)
-  const handleDownloadData = useCallback(async () => {
+  const handleDownloadData = useCallback(async (_e?: React.MouseEvent) => {
     setLoading(true);
     setError("");
     setSuccess("");
