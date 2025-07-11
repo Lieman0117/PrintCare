@@ -128,7 +128,8 @@ export default function DashboardPage() {
   // --- End Stats & Analytics Data ---
 
   // Recent print jobs (last 5)
-  const recentJobs = printJobs.slice(0, 5);
+  const recentJobs = printJobs.slice(0, 3);
+  const hasMoreJobs = printJobs.length > 3;
 
   // Upcoming/overdue maintenance (intervals with no log)
   const dueMaintenance = intervals.filter(interval => {
@@ -187,6 +188,11 @@ export default function DashboardPage() {
                 </li>
               ))}
             </ul>
+            {hasMoreJobs && (
+              <div className="mt-4 text-center">
+                <a href="/print-jobs" className="inline-block bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition">See more</a>
+              </div>
+            )}
           </div>
 
           {/* Upcoming/Overdue Maintenance */}
