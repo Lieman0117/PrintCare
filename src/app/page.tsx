@@ -41,6 +41,11 @@ export default function DashboardPage() {
   const [maintenanceLogs, setMaintenanceLogs] = useState<MaintenanceLog[]>([]);
   const [intervals, setIntervals] = useState<MaintenanceInterval[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  // --- Maintenance carousel state ---
+  // (removed duplicate maintenancePage state)
+  useEffect(() => {
+    setMaintenancePage(0); // Reset page if dueMaintenance changes
+  }, [intervals, maintenanceLogs]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -131,11 +136,52 @@ export default function DashboardPage() {
   const recentJobs = printJobs.slice(0, 3);
   const hasMoreJobs = printJobs.length > 3;
 
-  // Upcoming/overdue maintenance (intervals with no log)
-  const dueMaintenance = intervals.filter(interval => {
-    const logsForType = maintenanceLogs.filter(l => l.printer_id === interval.printer_id && l.type === interval.type);
-    return logsForType.length === 0;
+  // Helper: get days/prints till due for an interval
+  function getDueInfo(interval: MaintenanceInterval) {
+    // Find last log for this interval type/printer
+    const logsForType = maintenanceLogs
+      .filter(l => l.printer_id === interval.printer_id && l.type === interval.type)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const lastLog = logsForType[0];
+    // Find all jobs for this printer since last maintenance
+    let jobsSince = printJobs.filter(j => j.printer_id === interval.printer_id);
+    if (lastLog) {
+      jobsSince = jobsSince.filter(j => j.start_time && new Date(j.start_time) > new Date(lastLog.date));
+    }
+    const printsSince = jobsSince.length;
+    // Days since last maintenance
+    let daysSince = 0;
+    if (lastLog) {
+      daysSince = Math.floor((Date.now() - new Date(lastLog.date).getTime()) / (1000 * 60 * 60 * 24));
+    } else if (jobsSince.length > 0) {
+      // If never maintained, use first print job date
+      const firstJob = jobsSince[jobsSince.length - 1];
+      if (firstJob && firstJob.start_time) {
+        daysSince = Math.floor((Date.now() - new Date(firstJob.start_time).getTime()) / (1000 * 60 * 60 * 24));
+      }
+    }
+    // Calculate prints/days till due
+    let printsTillDue = interval.interval_prints !== null ? Math.max(0, interval.interval_prints - printsSince) : null;
+    let daysTillDue = interval.interval_hours !== null ? Math.max(0, Math.floor(interval.interval_hours / 24) - daysSince) : null;
+    return { printsTillDue, daysTillDue };
+  }
+
+  // Show all maintenance intervals, sorted by closest due (prints or days)
+  let dueMaintenance = intervals.map(interval => {
+    const dueInfo = getDueInfo(interval);
+    return { ...interval, ...dueInfo };
   });
+  dueMaintenance = dueMaintenance.sort((a, b) => {
+    const aDue = a.printsTillDue !== null ? a.printsTillDue : a.daysTillDue !== null ? a.daysTillDue : Infinity;
+    const bDue = b.printsTillDue !== null ? b.printsTillDue : b.daysTillDue !== null ? b.daysTillDue : Infinity;
+    return aDue - bDue;
+  });
+
+  // --- Maintenance carousel state ---
+  const [maintenancePage, setMaintenancePage] = useState<number>(0);
+  useEffect(() => {
+    setMaintenancePage(0); // Reset page if dueMaintenance changes
+  }, [dueMaintenance.length]);
 
   const DashboardChartsClient = dynamic(() => import("./dashboard-charts/DashboardChartsClient"), { ssr: false });
 
@@ -173,20 +219,29 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent print jobs */}
-          <div className="border rounded-xl bg-white dark:bg-gray-900 p-6 shadow">
+          <div className="border rounded-xl bg-white p-6 shadow">
             <h2 className="font-semibold mb-4 text-lg">Recent Print Jobs</h2>
             {recentJobs.length === 0 && <div className="text-gray-500">No print jobs found.</div>}
-            <ul className="divide-y divide-gray-200 dark:divide-gray-800">
-              {recentJobs.map(job => (
-                <li key={job.id} className="py-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                  <div>
-                    <span className="font-semibold">{job.name}</span>
-                    <span className="ml-2 text-xs text-gray-400">{getPrinterName(job.printer_id)}</span>
-                  </div>
-                  <div className="text-xs text-gray-500">{job.status || "-"}</div>
-                  <div className="text-xs text-gray-400">{job.start_time ? new Date(job.start_time).toLocaleString() : "-"}</div>
-                </li>
-              ))}
+            <ul className="divide-y divide-gray-200">
+              {recentJobs.map(job => {
+                let statusColor = "text-gray-500";
+                if (job.status) {
+                  const s = job.status.toLowerCase();
+                  if (s === "completed" || s === "success" || s === "done") statusColor = "text-green-600";
+                  else if (s === "failed" || s === "error" || s === "canceled" || s === "cancelled") statusColor = "text-red-600";
+                  else if (s === "in progress" || s === "printing" || s === "running") statusColor = "text-yellow-600";
+                }
+                return (
+                  <li key={job.id} className="py-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <div>
+                      <span className="font-semibold">{job.name}</span>
+                      <span className="ml-2 text-xs text-gray-400">{getPrinterName(job.printer_id)}</span>
+                    </div>
+                    <div className={`text-xs font-semibold ${statusColor}`}>{job.status || "-"}</div>
+                    <div className="text-xs text-gray-400">{job.start_time ? new Date(job.start_time).toLocaleString() : "-"}</div>
+                  </li>
+                );
+              })}
             </ul>
             {hasMoreJobs && (
               <div className="mt-4 text-center">
@@ -195,32 +250,62 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Upcoming/Overdue Maintenance */}
-          <div className="border rounded-xl bg-white dark:bg-gray-900 p-6 shadow">
-            <h2 className="font-semibold mb-4 text-lg">Upcoming/Overdue Maintenance</h2>
-            {dueMaintenance.length === 0 && <div className="text-green-600">No maintenance due!</div>}
-            <ul className="divide-y divide-gray-200 dark:divide-gray-800">
-              {dueMaintenance.map(interval => (
-                <li key={interval.id} className="py-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                  <div>
-                    <span className="font-semibold">{interval.type}</span>
-                    <span className="ml-2 text-xs text-gray-400">{getPrinterName(interval.printer_id)}</span>
+          {/* Upcoming/Overdue Maintenance as blocks with carousel */}
+          <div className="border rounded-xl bg-white p-6 shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-lg">Upcoming/Overdue Maintenance</h2>
+              {dueMaintenance.length > 2 && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setMaintenancePage(p => Math.max(0, p - 1))}
+                    className="rounded-full p-1 border border-gray-300 bg-gray-50 hover:bg-gray-100 disabled:opacity-50"
+                    disabled={maintenancePage === 0}
+                    aria-label="Previous"
+                  >
+                    <svg width="20" height="20" fill="none" viewBox="0 0 20 20"><path d="M13 15l-5-5 5-5" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </button>
+                  <button
+                    onClick={() => setMaintenancePage(p => Math.min(Math.ceil(dueMaintenance.length / 2) - 1, p + 1))}
+                    className="rounded-full p-1 border border-gray-300 bg-gray-50 hover:bg-gray-100 disabled:opacity-50"
+                    disabled={maintenancePage >= Math.ceil(dueMaintenance.length / 2) - 1}
+                    aria-label="Next"
+                  >
+                    <svg width="20" height="20" fill="none" viewBox="0 0 20 20"><path d="M7 5l5 5-5 5" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </button>
+                </div>
+              )}
+            </div>
+            {dueMaintenance.length === 0 && <div className="text-green-600">No maintenance intervals found.</div>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {dueMaintenance.slice(maintenancePage * 2, maintenancePage * 2 + 2).map(interval => {
+                const overdue = (interval.printsTillDue !== null && interval.printsTillDue <= 0) || (interval.daysTillDue !== null && interval.daysTillDue <= 0);
+                return (
+                  <div key={interval.id} className={`flex flex-col border rounded-lg p-4 ${overdue ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-blue-50'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-semibold text-blue-800">{interval.type}</span>
+                      <span className="ml-2 text-xs text-gray-500">{getPrinterName(interval.printer_id)}</span>
+                    </div>
+                    <div className="text-xs text-gray-700 mb-2">
+                      {interval.printsTillDue !== null && (
+                        <span>{Math.abs(interval.printsTillDue)} prints {interval.printsTillDue <= 0 ? 'overdue' : 'till due'}</span>
+                      )}
+                      {interval.daysTillDue !== null && (
+                        <span className="ml-2">{Math.abs(interval.daysTillDue)} days {interval.daysTillDue <= 0 ? 'overdue' : 'till due'}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between mt-auto">
+                      <div className={`text-xs font-semibold ${overdue ? 'text-red-600' : 'text-green-700'}`}>{overdue ? 'Due' : 'OK'}</div>
+                      <a
+                        href="/maintenance"
+                        className="ml-2 px-3 py-1 rounded bg-blue-600 text-white text-xs font-semibold shadow hover:bg-blue-700 transition border border-blue-700"
+                        style={{ textDecoration: 'none', display: 'inline-block' }}
+                      >
+                        See more
+                      </a>
+                    </div>
                   </div>
-                  <div className="text-xs text-red-600">Due</div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="border rounded-xl bg-white dark:bg-gray-900 p-6 shadow flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="font-semibold text-lg mb-2 md:mb-0">Quick Actions</div>
-            <div className="flex gap-2 flex-wrap">
-              <a href="/printers" className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition">Manage Printers</a>
-              <a href="/maintenance" className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition">Log Maintenance</a>
-              <a href="/print-jobs" className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition">Log Print Job</a>
-              <a href="/octoprint" className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition">OctoPrint</a>
-              <a href="/settings" className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition">Settings</a>
+                );
+              })}
             </div>
           </div>
         </div>

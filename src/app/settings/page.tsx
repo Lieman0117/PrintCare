@@ -3,7 +3,6 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import RequireAuth from "../../components/RequireAuth";
 import { saveAs } from "file-saver";
-import { useTheme } from "../../components/ThemeProvider";
 
 
 
@@ -37,12 +36,6 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  // Theme toggle
-  const { theme, setTheme, mounted } = useTheme();
-
-  const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme as 'light' | 'dark' | 'system');
-  };
 
   // Fetch user
   useEffect(() => {
@@ -298,33 +291,7 @@ export default function SettingsPage() {
           {error && <div className="text-red-600 font-semibold mt-2">{error}</div>}
         </div>
 
-        {/* Theme Toggle */}
-        <div className="border rounded p-4 bg-white dark:bg-gray-900 mb-6">
-          <h2 className="font-semibold mb-2">Theme</h2>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => handleThemeChange('light')} 
-              className={`px-4 py-2 rounded ${theme === 'light' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
-              disabled={!mounted}
-            >
-              Light
-            </button>
-            <button 
-              onClick={() => handleThemeChange('dark')} 
-              className={`px-4 py-2 rounded ${theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
-              disabled={!mounted}
-            >
-              Dark
-            </button>
-            <button 
-              onClick={() => handleThemeChange('system')} 
-              className={`px-4 py-2 rounded ${theme === 'system' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
-              disabled={!mounted}
-            >
-              System
-            </button>
-          </div>
-        </div>
+
 
         {/* Notification Preferences */}
         <div className="border rounded p-4 bg-white dark:bg-gray-900 mb-6">

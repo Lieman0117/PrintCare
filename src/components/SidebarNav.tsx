@@ -22,7 +22,7 @@ export default function SidebarNav() {
   }, []);
 
   return (
-    <aside className="hidden md:flex flex-col w-56 bg-white/90 dark:bg-gray-900/90 border-r border-gray-200 dark:border-gray-800 p-4 gap-2 sticky top-0 h-screen">
+    <aside className="hidden md:flex flex-col w-56 sidebar-bg dark:bg-gray-900/90 border-r border-gray-200 dark:border-gray-800 p-4 gap-2 sticky top-0 h-screen">
       <div className="mb-6">
         <span className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">PrintCare</span>
       </div>
