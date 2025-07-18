@@ -31,7 +31,7 @@ export default function SidebarNav() {
         <Link href="/printers" className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-3 py-2">Printers</Link>
         <Link href="/maintenance" className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-3 py-2">Maintenance Logs</Link>
         <Link href="/print-jobs" className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-3 py-2">Print Jobs</Link>
-        <Link href="/octoprint" className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-3 py-2">OctoPrint</Link>
+        {/* OctoPrint link removed */}
         <Link href="/settings" className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-3 py-2">Settings</Link>
         <Link href="/about" className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-3 py-2">About</Link>
         {!user && (

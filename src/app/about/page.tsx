@@ -8,7 +8,6 @@ export default function AboutPage() {
       <ul className="list-disc pl-6 mb-4">
         <li>Open source</li>
         <li>Modern Next.js 15 app</li>
-        <li>Optional OctoPrint integration</li>
         <li>Clean, responsive UI</li>
       </ul>
       <div className="border rounded p-4 bg-white dark:bg-gray-900">(Help and documentation links placeholder)</div>

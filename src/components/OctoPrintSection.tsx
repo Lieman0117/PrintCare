@@ -3,62 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 function SlicerModal({ open, onClose, url, apiKey }: { open: boolean, onClose: () => void, url: string, apiKey: string }) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-lg w-full max-w-md flex flex-col gap-4">
-        <h3 className="text-lg font-bold mb-2">Slicer Integration</h3>
-        <div className="text-sm mb-2">Copy these settings into PrusaSlicer or Cura to enable direct upload to OctoPrint.</div>
-        <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded text-xs">
-          <div><b>API Endpoint:</b> <span className="select-all">{url}/api/files/local</span></div>
-          <div><b>API Key:</b> <span className="select-all">{apiKey}</span></div>
-        </div>
-        <div className="text-xs mt-2">
-          <p><strong>PrusaSlicer:</strong> Go to <em>Printer Settings → General → &quot;Upload to OctoPrint&quot;</em>. Use the above URL and API key.</p>
-          <p><strong>Cura:</strong> Install the <em>&quot;OctoPrint Connection&quot;</em> plugin, then add a printer and use the above URL and API key.</p>
-        </div>
-        <button onClick={onClose} className="mt-4 px-3 py-1 rounded bg-blue-600 text-white self-end">Close</button>
-      </div>
-    </div>
-  );
-}
-
-async function fetchOctoPrintStatus(url: string, apiKey: string) {
-  try {
-    const res = await fetch(`${url}/api/printer`, {
-      headers: { "X-Api-Key": apiKey },
-    });
-    if (!res.ok) throw new Error("Failed to fetch status");
-    return await res.json();
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      return { error: e.message };
-    }
-    return { error: "Unknown error" };
-  }
-}
-
-async function fetchOctoPrintFiles(url: string, apiKey: string) {
-  try {
-    const res = await fetch(`${url}/api/files`, {
-      headers: { "X-Api-Key": apiKey },
-    });
-    if (!res.ok) throw new Error("Failed to fetch files");
-    return await res.json();
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      return { error: e.message };
-    }
-    return { error: "Unknown error" };
-  }
-}
-
-export default function OctoPrintSection({ userId, onPrintersChange, onSelectedChange }: { userId: string, onPrintersChange?: (printers: Record<string, unknown>[]) => void, onSelectedChange?: (printerId: string) => void }) {
-  const [printers, setPrinters] = useState<Record<string, unknown>[]>([]);
-  const [selected, setSelected] = useState<string>("");
-  const [form, setForm] = useState({ url: "", apiKey: "" });
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
+// OctoPrintSection removed
   const [files, setFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");

@@ -242,7 +242,7 @@ export default function SettingsPage() {
     <RequireAuth>
       <div>
         <h1 className="text-2xl font-bold mb-4">Settings</h1>
-        <p className="mb-2">Manage your account, OctoPrint integration, and notification preferences.</p>
+        <p className="mb-2">Manage your account and notification preferences.</p>
 
         {/* Account Info */}
         <div className="border rounded p-4 bg-white dark:bg-gray-900 mb-6">

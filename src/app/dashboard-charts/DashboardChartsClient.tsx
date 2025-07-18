@@ -8,7 +8,6 @@ interface DashboardChartsProps {
   gramsByMaterialData: { material: string; grams: number }[];
   avgPrintTime: number;
   manualJobs: number;
-  octoprintJobs: number;
   printTimeByPeriodData: { period: string; minutes: number }[];
   printTimeView: 'day' | 'week';
   setPrintTimeView: (v: 'day' | 'week') => void;
@@ -19,7 +18,6 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({
   gramsByMaterialData,
   avgPrintTime,
   manualJobs,
-  octoprintJobs,
   printTimeByPeriodData,
   printTimeView,
   setPrintTimeView,
@@ -29,7 +27,6 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({
     gramsByMaterialData.length > 0 ||
     avgPrintTime > 0 ||
     manualJobs > 0 ||
-    octoprintJobs > 0 ||
     printTimeByPeriodData.length > 0 ||
     maintenanceByTypeData.length > 0;
 

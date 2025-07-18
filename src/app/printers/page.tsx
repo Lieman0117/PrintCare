@@ -9,8 +9,6 @@ interface Printer {
   user_id: string;
   name: string;
   model?: string;
-  octoprint_url?: string;
-  octoprint_api_key?: string;
   notes?: string;
   created_at?: string;
   updated_at?: string;
@@ -98,8 +96,6 @@ export default function PrintersPage() {
     setForm({
       name: printer.name,
       model: printer.model,
-      octoprint_url: printer.octoprint_url,
-      octoprint_api_key: printer.octoprint_api_key,
       notes: printer.notes,
     });
   };
@@ -129,14 +125,6 @@ export default function PrintersPage() {
             <label className="block font-semibold mb-1">Model</label>
             <input name="model" value={form.model || ""} onChange={handleChange} className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800" />
           </div>
-          <div>
-            <label className="block font-semibold mb-1">OctoPrint URL</label>
-            <input name="octoprint_url" value={form.octoprint_url || ""} onChange={handleChange} className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800" />
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">OctoPrint API Key</label>
-            <input name="octoprint_api_key" value={form.octoprint_api_key || ""} onChange={handleChange} className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800" />
-          </div>
           <div className="md:col-span-2">
             <label className="block font-semibold mb-1">Notes</label>
             <textarea name="notes" value={form.notes || ""} onChange={handleChange} className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800" rows={2} />
@@ -156,7 +144,7 @@ export default function PrintersPage() {
               <div>
                 <div className="font-bold text-lg">{printer.name}</div>
                 <div className="text-sm text-gray-600 dark:text-gray-300">Model: {printer.model || "-"}</div>
-                {printer.octoprint_url && <div className="text-xs text-blue-700 dark:text-blue-300">OctoPrint: {printer.octoprint_url}</div>}
+                {/* OctoPrint URL removed */}
                 {printer.notes && <div className="text-xs text-gray-500">Notes: {printer.notes}</div>}
               </div>
               <div className="flex gap-2">

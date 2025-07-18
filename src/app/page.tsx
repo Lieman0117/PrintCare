@@ -63,19 +63,14 @@ export default function DashboardPage() {
   // Helper: get printer name
   const getPrinterName = (id: string) => printers.find(p => p.id === id)?.name || "-";
 
-  // Helper: get status for a printer
+  // Helper: get status for a printer (consistent with maintenance blocks)
   function getPrinterStatus(printerId: string) {
-    // If any interval is overdue for this printer, show "Maintenance Due"
     const intervalsForPrinter = intervals.filter(i => i.printer_id === printerId);
     for (const interval of intervalsForPrinter) {
-      const logsForType = maintenanceLogs.filter(l => l.printer_id === printerId && l.type === interval.type);
-      const lastLog = logsForType.length > 0 ? logsForType.reduce((a, b) => new Date(a.date) > new Date(b.date) ? a : b) : undefined;
-      // Always show full interval if lastLog exists (reset), otherwise calculate as usual
-      if (lastLog) {
-        continue; // Not overdue if just logged
+      const { printsTillDue, daysTillDue } = getDueInfo(interval);
+      if ((printsTillDue !== null && printsTillDue <= 0) || (daysTillDue !== null && daysTillDue <= 0)) {
+        return "Maintenance Due";
       }
-      // If no log, consider as due
-      return "Maintenance Due";
     }
     return "OK";
   }
@@ -123,12 +118,8 @@ export default function DashboardPage() {
   });
   const maintenanceByTypeData = Object.entries(maintenanceByType).map(([type, count]) => ({ type, count }));
 
-  // 5. Total number of manual and OctoPrint jobs
-  let manualJobs = 0, octoprintJobs = 0;
-  printJobs.forEach(job => {
-    if (job.source === 'octoprint') octoprintJobs++;
-    else manualJobs++;
-  });
+  // 5. Total number of print jobs
+  let manualJobs = printJobs.length;
 
   // --- End Stats & Analytics Data ---
 
@@ -197,7 +188,6 @@ export default function DashboardPage() {
             gramsByMaterialData={gramsByMaterialData}
             avgPrintTime={avgPrintTime}
             manualJobs={manualJobs}
-            octoprintJobs={octoprintJobs}
             printTimeByPeriodData={printTimeByPeriodData}
             printTimeView={printTimeView}
             setPrintTimeView={setPrintTimeView}
@@ -210,7 +200,7 @@ export default function DashboardPage() {
               <div key={printer.id} className="rounded-xl shadow bg-white dark:bg-gray-900 p-6 flex flex-col gap-2 border border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-2">
                   <span className="text-xl font-bold text-blue-700 dark:text-blue-300">{printer.name}</span>
-                  {printer.model && <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded px-2 py-0.5 ml-2">{printer.model}</span>}
+                  {printer.model && <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-100 dark:text-blue-200 rounded px-2 py-0.5 ml-2">{printer.model}</span>}
                 </div>
                 <div className="text-sm text-gray-500">Status: <span className={getPrinterStatus(printer.id) === "OK" ? "text-green-600" : "text-red-600"}>{getPrinterStatus(printer.id)}</span></div>
                 <div className="text-xs text-gray-400">Recent job: {printJobs.find(j => j.printer_id === printer.id)?.name || "-"}</div>

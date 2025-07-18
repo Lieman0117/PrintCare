@@ -28,7 +28,12 @@ const STATUS_OPTIONS = ["Success", "Failed", "In Progress"];
 export default function PrintJobsPage() {
   const [jobs, setJobs] = useState<PrintJob[]>([]);
   const [printers, setPrinters] = useState<Printer[]>([]);
-  const [form, setForm] = useState<Partial<PrintJob> & { grams_used?: string | number; hours?: string; minutes?: string }>({ hours: "", minutes: "" });
+  function getLocalNowString() {
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+  const [form, setForm] = useState<Partial<PrintJob> & { grams_used?: string | number; hours?: string; minutes?: string; print_start_time?: string }>({ hours: "", minutes: "", print_start_time: getLocalNowString() });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -84,13 +89,24 @@ export default function PrintJobsPage() {
       return;
     }
     const now = new Date();
-    const hours = parseInt(form.hours || "0", 10);
-    const minutes = parseInt(form.minutes || "0", 10);
-    const durationMs = (hours * 60 + minutes) * 60000;
+    const { hours: formHours, minutes: formMinutes, ...dbForm } = form;
+    const hoursNum = parseInt(formHours || "0", 10);
+    const minutesNum = parseInt(formMinutes || "0", 10);
+    const durationMs = (hoursNum * 60 + minutesNum) * 60000;
     const end_time = now.toISOString();
-    const start_time = new Date(now.getTime() - durationMs).toISOString();
+    // Use print_start_time if provided, else default to now
+    let start_time: string;
+    if (form.print_start_time) {
+      // Use the local datetime string as-is (no UTC conversion)
+      // Convert 'YYYY-MM-DDTHH:mm' to 'YYYY-MM-DDTHH:mm:00' for DB
+      start_time = form.print_start_time.length === 16 ? form.print_start_time + ':00' : form.print_start_time;
+    } else {
+      // fallback: now minus duration, in local time
+      const local = new Date(now.getTime() - durationMs);
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      start_time = `${local.getFullYear()}-${pad(local.getMonth()+1)}-${pad(local.getDate())}T${pad(local.getHours())}:${pad(local.getMinutes())}:00`;
+    }
     setLoading(true);
-    const dbForm = { ...form };
     if (editingId) {
       // Update
       const { error } = await supabase
@@ -108,7 +124,7 @@ export default function PrintJobsPage() {
       else {
         setJobs(jobs.map(j => (j.id === editingId ? { ...j, ...dbForm, start_time, end_time, printer: printers.find(p => p.id === form.printer_id) } as PrintJob : j)));
         setEditingId(null);
-        setForm({ hours: "", minutes: "" });
+        setForm({ hours: "", minutes: "", print_start_time: getLocalNowString() });
       }
     } else {
       // Create
@@ -120,7 +136,7 @@ export default function PrintJobsPage() {
       if (error) setError(error.message);
       else if (data) {
         setJobs([data as PrintJob, ...jobs]);
-        setForm({ hours: "", minutes: "" });
+        setForm({ hours: "", minutes: "", print_start_time: getLocalNowString() });
       }
     }
     setLoading(false);
@@ -137,6 +153,7 @@ export default function PrintJobsPage() {
       start_time: job.start_time,
       end_time: job.end_time,
       notes: job.notes,
+      print_start_time: job.start_time ? job.start_time.slice(0, 16) : getLocalNowString(),
     });
   };
 
@@ -186,6 +203,16 @@ export default function PrintJobsPage() {
             </select>
           </div>
           <div>
+            <label className="block font-semibold mb-1">Print Start Time</label>
+            <input
+              type="datetime-local"
+              name="print_start_time"
+              value={form.print_start_time || new Date().toISOString().slice(0, 16)}
+              onChange={handleChange}
+              className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800"
+            />
+          </div>
+          <div>
             <label className="block font-semibold mb-1">Print Duration</label>
             <div className="flex gap-2">
               <input type="number" name="hours" min="0" max="99" value={form.hours || ""} onChange={handleChange} placeholder="Hours" className="w-20 p-2 border rounded bg-gray-50 dark:bg-gray-800" />
@@ -199,7 +226,7 @@ export default function PrintJobsPage() {
           <div className="md:col-span-2 flex gap-2">
             <button type="submit" className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition" disabled={loading || !userId}>{editingId ? "Update" : "Add"} Job</button>
             {editingId && (
-              <button type="button" onClick={() => { setEditingId(null); setForm({ hours: "", minutes: "" }); }} className="bg-gray-300 dark:bg-gray-700 text-black dark:text-white rounded px-4 py-2 font-semibold">Cancel</button>
+              <button type="button" onClick={() => { setEditingId(null); setForm({ hours: "", minutes: "", print_start_time: getLocalNowString() }); }} className="bg-gray-300 dark:bg-gray-700 text-black dark:text-white rounded px-4 py-2 font-semibold">Cancel</button>
             )}
           </div>
           {error && <div className="text-red-600 md:col-span-2">{error}</div>}
