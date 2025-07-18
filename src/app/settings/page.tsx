@@ -86,12 +86,12 @@ export default function SettingsPage() {
   }, [userId]);
 
   // Log activity
-  const logActivity = async (action: string, details?: string) => {
+  const logActivity = useCallback(async (action: string, details?: string) => {
     if (!userId) return;
     await supabase
       .from("user_activity")
       .insert([{ user_id: userId, action, details }]);
-  };
+  }, [userId]);
 
   // Update notification preferences
   const handleNotificationToggle = async (type: 'email' | 'in_app', value: boolean) => {

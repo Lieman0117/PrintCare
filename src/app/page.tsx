@@ -153,7 +153,7 @@ export default function DashboardPage() {
     }
     // Calculate prints/days till due
     let printsTillDue = interval.interval_prints !== null ? Math.max(0, interval.interval_prints - printsSince) : null;
-    let daysTillDue = interval.interval_hours !== null ? Math.max(0, Math.floor(interval.interval_hours / 24) - daysSince) : null;
+    const daysTillDue = interval.interval_hours !== null ? Math.max(0, Math.floor(interval.interval_hours / 24) - daysSince) : null;
     return { printsTillDue, daysTillDue };
   }
 
