@@ -119,7 +119,7 @@ export default function DashboardPage() {
   const maintenanceByTypeData = Object.entries(maintenanceByType).map(([type, count]) => ({ type, count }));
 
   // 5. Total number of print jobs
-  let manualJobs = printJobs.length;
+  const manualJobs = printJobs.length;
 
   // --- End Stats & Analytics Data ---
 
@@ -152,7 +152,7 @@ export default function DashboardPage() {
       }
     }
     // Calculate prints/days till due
-    let printsTillDue = interval.interval_prints !== null ? Math.max(0, interval.interval_prints - printsSince) : null;
+    const printsTillDue = interval.interval_prints !== null ? Math.max(0, interval.interval_prints - printsSince) : null;
     const daysTillDue = interval.interval_hours !== null ? Math.max(0, Math.floor(interval.interval_hours / 24) - daysSince) : null;
     return { printsTillDue, daysTillDue };
   }
