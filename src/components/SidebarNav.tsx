@@ -33,7 +33,7 @@ export default function SidebarNav() {
         <Link href="/print-jobs" className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-3 py-2">Print Jobs</Link>
         {/* OctoPrint link removed */}
         <Link href="/settings" className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-3 py-2">Settings</Link>
-        <Link href="/about" className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-3 py-2">About</Link>
+        {/* About link removed */}
         {!user && (
           <Link href="/login" className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-3 py-2">Login</Link>
         )}
