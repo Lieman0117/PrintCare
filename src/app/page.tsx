@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import RequireAuth from "../components/RequireAuth";
-import MobileNavDrawer from "../components/MobileNavDrawer";
 import dynamic from "next/dynamic";
 
 interface Printer {
@@ -178,7 +177,6 @@ export default function DashboardPage() {
 
   return (
     <>
-      <MobileNavDrawer />
       <RequireAuth>
         <div className="space-y-8">
           <h1 className="text-3xl font-bold mb-2">Dashboard</h1>

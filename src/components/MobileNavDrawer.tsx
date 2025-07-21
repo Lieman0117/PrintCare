@@ -14,10 +14,19 @@ import {
   LogOut
 } from "lucide-react";
 
-export default function MobileNavDrawer() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
+interface MobileNavDrawerProps {
+  setDrawerOpen?: (open: boolean) => void;
+}
+
+export default function MobileNavDrawer({ setDrawerOpen }: MobileNavDrawerProps) {
+  const [drawerOpen, setDrawerOpenState] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  // Notify parent of drawer state
+  useEffect(() => {
+    if (setDrawerOpen) setDrawerOpen(drawerOpen);
+  }, [drawerOpen, setDrawerOpen]);
 
   // Check auth state
   useEffect(() => {
@@ -37,7 +46,7 @@ export default function MobileNavDrawer() {
   useEffect(() => {
     if (!drawerOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setDrawerOpen(false);
+      if (e.key === "Escape") setDrawerOpenState(false);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -58,7 +67,7 @@ export default function MobileNavDrawer() {
         aria-label="Open navigation menu"
         aria-controls="mobile-nav-drawer"
         aria-expanded={drawerOpen}
-        onClick={() => setDrawerOpen(true)}
+        onClick={() => setDrawerOpenState(true)}
       >
         <Menu size={28} />
       </button>
@@ -66,9 +75,9 @@ export default function MobileNavDrawer() {
       {drawerOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity md:hidden"
+            className="fixed inset-0 z-40 bg-black/90 transition-opacity md:hidden"
             aria-hidden="true"
-            onClick={() => setDrawerOpen(false)}
+            onClick={() => setDrawerOpenState(false)}
           />
           <nav
             id="mobile-nav-drawer"
@@ -81,38 +90,38 @@ export default function MobileNavDrawer() {
             <button
               className="self-end mb-4 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500"
               aria-label="Close navigation menu"
-              onClick={() => setDrawerOpen(false)}
+              onClick={() => setDrawerOpenState(false)}
             >
               <X size={24} />
             </button>
-            <Link href="/" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpen(false)}>
+            <Link href="/" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpenState(false)}>
               <LayoutDashboard size={22} />
               Dashboard
             </Link>
-            <Link href="/printers" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpen(false)}>
+            <Link href="/printers" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpenState(false)}>
               <Printer size={22} />
               Printers
             </Link>
-            <Link href="/maintenance" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpen(false)}>
+            <Link href="/maintenance" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpenState(false)}>
               <Wrench size={22} />
               Maintenance Logs
             </Link>
-            <Link href="/print-jobs" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpen(false)}>
+            <Link href="/print-jobs" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpenState(false)}>
               <FileText size={22} />
               Print Jobs
             </Link>
-            <Link href="/settings" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpen(false)}>
+            <Link href="/settings" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpenState(false)}>
               <Settings size={22} />
               Settings
             </Link>
             {isLoggedIn === false && (
-              <Link href="/login" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpen(false)}>
+              <Link href="/login" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpenState(false)}>
                 <LogIn size={22} />
                 Login
               </Link>
             )}
             {isLoggedIn === true && (
-              <Link href="/logout" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpen(false)}>
+              <Link href="/logout" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setDrawerOpenState(false)}>
                 <LogOut size={22} />
                 Logout
               </Link>
